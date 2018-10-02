@@ -12,6 +12,10 @@ private:
 	char field[BOARD_SIZE][BOARD_SIZE];
 
 public:
+	char getSquare(int x, int y) {
+		return field[x][y];
+	}
+
 	game_field(char empty) {
 		for (int i = 0; i < BOARD_SIZE; i++)
 			for (int j = 0; j < BOARD_SIZE; j++)
@@ -50,15 +54,36 @@ public:
 		}
 	}
 
-	void insert_ship(int x, int y, int length, char ship, int aligment) {
+	void insert_ship(int x, int y, int length, char ship, int aligment, char surrounding) {
+
+		x;
+		y;
 
 		if (aligment == 1)
-			for (int i = x - 1; i < x - 1 + length; i++) {
-				field[i][y - 1] = ship;
+			for (int i = x; i < x + length; i++) {
+				field[i][y] = ship;
+
+				if (!(y + 1 >= BOARD_SIZE) && (field[i][y + 1] != ship))
+					field[i][y + 1] = surrounding;
+				if (!(y - 1 < 0) && (field[i][y - 1] != ship))
+					field[i][y - 1] = surrounding;
+				if (!(i + 1 >= BOARD_SIZE) && (field[i + 1][y] != ship))
+					field[i + 1][y] = surrounding;
+				if (!(i - 1 < 0) && (field[i - 1][y] != ship))
+					field[i - 1][y] = surrounding;
 			}
-		else if (aligment == 2)
-			for (int i = y - 1; i < y - 1 + length; i++) {
-				field[x - 1][i] = ship;
+		else
+			for (int i = y; i < y + length; i++) {
+				field[x][i] = ship;
+
+				if (!(x + 1 >= BOARD_SIZE))
+					field[x + 1][i] = surrounding;
+				if (!(x - 1 < 0))
+					field[x - 1][i] = surrounding;
+				if (!(i + 1 >= BOARD_SIZE))
+					field[x][i + 1] = surrounding;
+				if (!(i - 1 < 0))
+					field[x][i - 1] = surrounding;
 			}
 	}
 
@@ -76,7 +101,7 @@ public:
 	}
 
 	bool game_over(char ship) {
-		
+
 		for (int y = 0; y < BOARD_SIZE; y++) {
 			for (int x = 0; x < BOARD_SIZE; x++)
 				if (field[x][y] == ship)
@@ -95,7 +120,7 @@ private:
 	int _size;
 	int _count;
 public:
-	ship (std::string name, int size, int count) {
+	ship(std::string name, int size, int count) {
 		_name = name;
 		_size = size;
 		_count = count;
@@ -108,7 +133,7 @@ public:
 	int getSize() {
 		return _size;
 	}
-	
+
 	int getCount() {
 		return _count;
 	}
@@ -127,34 +152,25 @@ public:
 
 };
 
-void set_up_board(game_field & field, std::string name);
+void set_up_board(game_field & player, game_field & computer);
 void players_turn(game_field & target, std::string name);
+int constrain(int number, int min, int max);
 
 int main() {
 
-	game_field field1('#');
-	game_field field2('#');
-	
-	set_up_board(field1, "Pirmo");
-	//set_up_board(field2, "Antro");
+	game_field player('#');
+	game_field computer('#');
 
-	bool game_over = false;
-	while (!game_over) {
-		//Pirmo zaidejo eile 
-		players_turn(field2, "Antro");
-		
-		//Antro zaidejo eile
-		players_turn(field1, "Pirmo");
-	}
+	set_up_board(player, computer);
 
 
 	system("pause");
 	return 0;
 }
 
-void set_up_board(game_field & field, std::string name) {
+void set_up_board(game_field & player, game_field & computer) {
 
-	std::ifstream file(name + ".txt");
+	std::ifstream file("Zaidejas.txt");
 
 	ship battleship("battleship", 4, 1);
 	ship cruiser("cruiser", 3, 2);
@@ -170,42 +186,72 @@ void set_up_board(game_field & field, std::string name) {
 
 	while (!ships.empty()) {
 
-		if (name == "Antro")
-			std::cout << "Pirmo zaidejo eile:\n";
-		else std::cout << "Antro zaidejo eile:\n";
+		std::cout << "Zaidejo eile:\n";
 
 		system("cls");
-		std::cout << name << " zaidejo lenta:\n";
-		field.print_with_ships();
+		std::cout << "Zaidejo lenta:\n";
+		player.print_with_ships();
 
-		std::cout << "\n" << name << " zaidejo laivai\n";
+		std::cout << "laivai\n";
 		for (int i = 0; i < ships.size(); i++) {
 			std::cout << i + 1 << ". " << ships[i].getName() << ". Dydis: " << ships[i].getSize() << ". Liko: " << ships[i].getCount() << ".\n";
 		}
 
 		std::cout << "\nPasirinkite laiva:\n";
 		int laivas;
-		//std::cin >> laivas;
-		file >> laivas;
+		std::cin >> laivas;
+		laivas = constrain(laivas, 1, ships.size());
 
 		std::cout << "\nKaip ji pastatyti:\n";
 		std::cout << "1. Horizontaliai (laivas judes i desine)\n2. Vertikaliai (laivas judes zemyn)\n";
 		int lygiuote;
-		//std::cin >> lygiuote;
-		file >> lygiuote;
+		std::cin >> lygiuote;
+		lygiuote = constrain(lygiuote, 1, 2);
 
-		std::cout << "\nx pozicija: ";
 		int x;
-		//std::cin >> x;
-		file >> x;
-
-		std::cout << "y pozicija: ";
 		int y;
-		//std::cin >> y;
-		file >> y;
+
+		bool validPos = false;
+		while (!validPos) {
+
+			std::cout << "\nx pozicija: ";
+			std::cin >> x;
+			x = constrain(x, 1, BOARD_SIZE - ships[laivas - 1].getSize());
+			x--;
+
+			std::cout << "y pozicija: ";
+			std::cin >> y;
+			y = constrain(y, 1, BOARD_SIZE - ships[laivas - 1].getSize());
+			y--;
+
+			if (lygiuote == 1)
+				for (int i = x; i < x + ships[laivas - 1].getSize(); i++) {
+					if (player.getSquare(i, y) != '*' || player.getSquare(i, y) != 'O')
+						validPos = true;
+					else {
+						validPos = false;
+						break;
+					}
+				}
+			else
+				for (int i = y; i < y + ships[laivas - 1].getSize(); i++) {
+					if (player.getSquare(x, i) != '*' || player.getSquare(x, i) != 'O')
+						validPos = true;
+					else {
+						validPos = false;
+						break;
+					}
+				}
+
+
+			if (!validPos) {
+				std::cout << "Negalima pozicija\n\n";
+			}
+
+		}
 
 		system("cls");
-		field.insert_ship(x, y, ships[laivas - 1].getSize(), '0', lygiuote);
+		player.insert_ship(x, y, ships[laivas - 1].getSize(), 'O', lygiuote, '*');
 
 		ships[laivas - 1].setCount(ships[laivas - 1].getCount() - 1);
 		if (ships[laivas - 1].getCount() <= 0) {
@@ -237,15 +283,23 @@ void players_turn(game_field & target, std::string name) {
 	int y;
 	std::cin >> y;
 
+	//hit miss ship
+	bool hit = target.hit(x, y, 'X', '*', '0');
 
-	//hit miss
-	bool hit = target.hit(x, y, 'X', '$', '0');
-
-	std::cout << hit ? "Hit!" : "Miss!";
 	system("cls");
+	hit ? std::cout << "Hit!\n" : std::cout << "Miss\n";
+	system("pause");
 
 	if (hit && !target.game_over('0'))
 		players_turn(target, name);
+}
 
+int constrain(int number, int min, int max) {
+	
+	if (number < min)
+		return min;
+	else if (number > max)
+		return max;
+	else return number;
 
 }

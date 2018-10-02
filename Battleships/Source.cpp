@@ -71,18 +71,26 @@ public:
 					field[i + 1][y] = surrounding;
 				if (!(i - 1 < 0) && (field[i - 1][y] != ship))
 					field[i - 1][y] = surrounding;
+				if (!(i - 1 < 0) && (field[i - 1][y - 1]) != ship))
+					field[i - 1][y - 1] = surrounding;
+				if (!(i - 1 < 0) && (field[i - 1][y - 1]) != ship))
+					field[i - 1][y - 1] = surrounding;
+				if (!(i - 1 < 0) && (field[i - 1][y - 1]) != ship))
+					field[i - 1][y - 1] = surrounding;
+				if (!(i - 1 < 0) && (field[i - 1][y - 1]) != ship))
+					field[i - 1][y - 1] = surrounding;
 			}
 		else
 			for (int i = y; i < y + length; i++) {
 				field[x][i] = ship;
 
-				if (!(x + 1 >= BOARD_SIZE))
+				if (!(x + 1 >= BOARD_SIZE) && (field[x + 1][i] != ship))
 					field[x + 1][i] = surrounding;
-				if (!(x - 1 < 0))
+				if (!(x - 1 < 0) && (field[x - 1][i] != ship))
 					field[x - 1][i] = surrounding;
-				if (!(i + 1 >= BOARD_SIZE))
+				if (!(i + 1 >= BOARD_SIZE) && field[x][i + 1] != ship)
 					field[x][i + 1] = surrounding;
-				if (!(i - 1 < 0))
+				if (!(i - 1 < 0) && field[x][i - 1] != ship)
 					field[x][i - 1] = surrounding;
 			}
 	}
@@ -224,28 +232,31 @@ void set_up_board(game_field & player, game_field & computer) {
 			y = constrain(y, 1, BOARD_SIZE - ships[laivas - 1].getSize());
 			y--;
 
-			if (lygiuote == 1)
+			if (lygiuote == 1) 
 				for (int i = x; i < x + ships[laivas - 1].getSize(); i++) {
-					if (player.getSquare(i, y) != '*' || player.getSquare(i, y) != 'O')
-						validPos = true;
-					else {
+					if (player.getSquare(i, y) == 'O' || player.getSquare(i, y) == '*') {
 						validPos = false;
 						break;
 					}
+					else validPos = true;
 				}
 			else
 				for (int i = y; i < y + ships[laivas - 1].getSize(); i++) {
-					if (player.getSquare(x, i) != '*' || player.getSquare(x, i) != 'O')
-						validPos = true;
-					else {
+					if (player.getSquare(i, y) == 'O' || player.getSquare(i, y) == '*') {
 						validPos = false;
 						break;
 					}
+					else validPos = true;
+
 				}
 
 
 			if (!validPos) {
 				std::cout << "Negalima pozicija\n\n";
+				system("pause");
+				system("cls");
+
+				player.print_with_ships();
 			}
 
 		}

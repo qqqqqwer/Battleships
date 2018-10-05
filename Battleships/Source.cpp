@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#include <stdlib.h>
+#include <ctime>
 
 #define BOARD_SIZE 9
 
@@ -154,14 +154,6 @@ public:
 		return _count;
 	}
 
-	void setName(std::string name) {
-		_name = name;
-	}
-
-	void setSize(int size) {
-		_size = size;
-	}
-
 	void setCount(int count) {
 		_count = count;
 	}
@@ -169,8 +161,8 @@ public:
 };
 
 void set_up_board(game_field & player, game_field & computer);
-void players_turn(game_field & target, std::string name);
-int constrain(int number, int min, int max);
+bool isValidPos(int x, int y, int length, int lygiuote, game_field field);
+int randomNum(int min, int max);
 
 int main() {
 
@@ -204,31 +196,35 @@ void set_up_board(game_field & player, game_field & computer) {
 
 		std::cout << "Zaidejo eile:\n";
 
-		system("cls");
-		std::cout << "Zaidejo lenta:\n";
-		player.print_with_ships();
-
-		std::cout << "laivai\n";
-		for (int i = 0; i < ships.size(); i++) {
-			std::cout << i + 1 << ". " << ships[i].getName() << ". Dydis: " << ships[i].getSize() << ". Liko: " << ships[i].getCount() << ".\n";
-		}
-
-		std::cout << "\nPasirinkite laiva:\n";
 		int laivas;
-		std::cin >> laivas;
-		laivas = constrain(laivas, 1, ships.size());
-
-		std::cout << "\nKaip ji pastatyti:\n";
-		std::cout << "1. Horizontaliai (laivas judes i desine)\n2. Vertikaliai (laivas judes zemyn)\n";
 		int lygiuote;
-		std::cin >> lygiuote;
-		lygiuote = constrain(lygiuote, 1, 2);
-
 		int x;
 		int y;
 
-		bool validPos = false;
-		while (!validPos) {
+		bool validPlayerInput = false;
+		while (!validPlayerInput) {
+			system("cls");
+			std::cout << "Zaidejo lenta:\n";
+			player.print_with_ships();
+			std::cout << "\nKompiuterio lenta:\n";
+			computer.print_with_ships();
+
+			std::cout << "laivai\n";
+			for (int i = 0; i < ships.size(); i++) {
+				std::cout << i + 1 << ". " << ships[i].getName() << ". Dydis: " << ships[i].getSize() << ". Liko: " << ships[i].getCount() << ".\n";
+			}
+
+			std::cout << "\nPasirinkite laiva:\n";
+			std::cin >> laivas;
+			if (laivas < 1 || laivas > ships.size())
+				break;
+
+			std::cout << "\nKaip ji pastatyti:\n";
+			std::cout << "1. Horizontaliai (laivas judes i desine)\n2. Vertikaliai (laivas judes zemyn)\n";
+			std::cin >> lygiuote;
+			if (lygiuote < 1 || lygiuote > 2)
+				break;
+
 
 			std::cout << "\nx pozicija: ";
 			std::cin >> x;
@@ -236,40 +232,33 @@ void set_up_board(game_field & player, game_field & computer) {
 
 			std::cout << "y pozicija: ";
 			std::cin >> y;
-			y--;
+			y--;	 
 
-			if (lygiuote == 1) {
-				for (int i = x; i < x + ships[laivas - 1].getSize(); i++) {
-					if (player.getSquare(i, y) == 'O' || player.getSquare(i, y) == '*') {
-						validPos = false;
-						break;
-					}
-					else validPos = true;
-				}
-			}	
-			else {
-				for (int i = y; i < y + ships[laivas - 1].getSize(); i++) {
-					if (player.getSquare(x, i) == 'O' || player.getSquare(x, i) == '*') {
-						validPos = false;
-						break;
-					}
-					else validPos = true;
-
-				}
-			}
-
-			if (!validPos) {
-				std::cout << "\nNegalima pozicija\n\n";
+			if (!validPlayerInput || !isValidPos(x, y, ships[laivas - 1].getSize() - 1, lygiuote, player)) {
+				std::cout << "\Bloga pozicija \\\\ Negalimi kiti duomenys\n\n";
 				system("pause");
-				system("cls");
-
-				player.print_with_ships();
 			}
+		}
 
+		int computerX;
+		int computerY;
+		int computerAligment;
+
+		bool validComputerInput = false;
+		while (!validComputerInput) {
+			computerX = randomNum(0, BOARD_SIZE - 1);
+			computerY = randomNum(0, BOARD_SIZE - 1);
+			computerAligment = (0, 1);
+
+			if (isValidPos(computerX, computerY, ships[laivas - 1].getSize() - 1, computerAligment, computer))
+				validComputerInput = true;
+			else
+				validComputerInput = false;
 		}
 
 		system("cls");
 		player.insert_ship(x, y, ships[laivas - 1].getSize(), 'O', lygiuote, '*');
+		computer.insert_ship(computerX, computerY, ships[laivas - 1].getSize(), 'O', computerAligment, '*');
 
 		ships[laivas - 1].setCount(ships[laivas - 1].getCount() - 1);
 		if (ships[laivas - 1].getCount() <= 0) {
@@ -278,46 +267,40 @@ void set_up_board(game_field & player, game_field & computer) {
 	}
 }
 
-void players_turn(game_field & target, std::string name) {
+bool isValidPos(int x, int y, int length, int lygiuote, game_field field) {
+	
+	if (lygiuote == 1) {
+		if (x + length >= BOARD_SIZE || x < 0 || y < 0 || y >= BOARD_SIZE)
+			return false;
 
-	system("cls");
-
-	if (target.game_over('0')) {
-		std::cout << "Antras zaidejas pralaimejo";
-		exit(0);
+		for (int i = x; i < x + length; i++) {
+			if (field.getSquare(i, y) == 'O' || field.getSquare(i, y) == '*') {
+				return false;
+			}
+			return true;
+		}
 	}
+	else {
 
-	std::cout << name << " lenta:\n";
+		if (y + length >= BOARD_SIZE || x < 0 || y < 0 || x >= BOARD_SIZE)
+			return false;
 
-	target.print_without_ships('X', '#');
-	std::cout << "\n\n";
-	target.print_with_ships();
+		for (int i = y; i < y + length; i++) {
+			if (field.getSquare(x, i) == 'O' || field.getSquare(x, i) == '*') {
+				return false;
+				break;
+			}
+			else 
+				return true;
 
-	std::cout << "\nX: ";
-	int x;
-	std::cin >> x;
-
-	std::cout << "Y: ";
-	int y;
-	std::cin >> y;
-
-	//hit miss ship
-	bool hit = target.hit(x, y, 'X', '*', '0');
-
-	system("cls");
-	hit ? std::cout << "Hit!\n" : std::cout << "Miss\n";
-	system("pause");
-
-	if (hit && !target.game_over('0'))
-		players_turn(target, name);
+		}
+	}
 }
 
-int constrain(int number, int min, int max) {
-	
-	if (number < min)
-		return min;
-	else if (number > max)
-		return max;
-	else return number;
+int randomNum(int min, int max) {
+
+	srand(time(NULL));
+
+	return rand() % (max - min + 1) + min;
 
 }

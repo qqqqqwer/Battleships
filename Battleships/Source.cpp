@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <ctime>
+#include <limits>
 
 #define BOARD_SIZE 9
 
@@ -37,7 +38,10 @@ public:
 		}
 	}
 
-	void print_without_ships(char hit, char empty) {
+	void print_without_ships(char hit, char empty, char miss) {
+		//X - hit ship
+		//# - empty space
+		//* - missed shot
 		std::cout << "  ";
 		for (int i = 0; i < BOARD_SIZE; i++)
 			std::cout << i + 1 << " ";
@@ -46,10 +50,15 @@ public:
 		for (int y = 0; y < BOARD_SIZE; y++) {
 			std::cout << y + 1 << " ";
 			for (int x = 0; x < BOARD_SIZE; x++)
-				if (field[x][y] != hit)
-					std::cout << empty << " ";
-				else
+				if (field[x][y] == hit)
 					std::cout << hit << " ";
+				else if (field[x][y] == miss)
+					std::cout << miss << " ";
+				else
+					std::cout << empty << " ";
+				
+					
+
 			std::cout << "\n";
 		}
 	}
@@ -86,19 +95,18 @@ public:
 					field[x + 1][i] = surrounding;
 				if (!(x - 1 < 0) && (field[x - 1][i] != ship))
 					field[x - 1][i] = surrounding;
-				if (!(i + 1 >= BOARD_SIZE) && field[x][i + 1] != ship)
+				if (!(i + 1 >= BOARD_SIZE) && (field[x][i + 1] != ship))
 					field[x][i + 1] = surrounding;
-				if (!(i - 1 < 0) && field[x][i - 1] != ship)
+				if (!(i - 1 < 0) && (field[x][i - 1] != ship))
 					field[x][i - 1] = surrounding;
 
-				
-				if (!(x + 1 >= BOARD_SIZE) && !(i + 1 >= BOARD_SIZE))
+				if (!(x + 1 >= BOARD_SIZE) && !(i + 1 >= BOARD_SIZE) && (field[x + 1][i + 1] != ship))
 					field[x + 1][i + 1] = surrounding;
-				if (!(x - 1 < 0) && !(i + 1 >= BOARD_SIZE))
-					field[x + 1][i - 1] = surrounding;
-				if (!(x + 1 >= BOARD_SIZE) && !(i - 1 < 0))
+				if (!(x - 1 < 0) && !(i + 1 >= BOARD_SIZE) && (field[x - 1][i + 1] != ship))
 					field[x - 1][i + 1] = surrounding;
-				if (!(x - 1 < 0) && !(i - 1 < 0))
+				if (!(x + 1 >= BOARD_SIZE) && !(i - 1 < 0) && (field[x + 1][i - 1] != ship))
+					field[x + 1][i - 1] = surrounding;
+				if (!(x - 1 < 0) && !(i - 1 < 0) && (field[x - 1][i - 1] != ship))
 					field[x - 1][i - 1] = surrounding;
 			}
 	}
@@ -106,12 +114,12 @@ public:
 	//X $ 0 
 	bool hit(int x, int y, char hit, char miss, char ship) {
 
-		if (field[x - 1][y - 1] == ship) {
-			field[x - 1][y - 1] = hit;
+		if (field[x][y] == ship) {
+			field[x][y] = hit;
 			return true;
 		}
 		else {
-			field[x - 1][y - 1] = miss;
+			field[x][y] = miss;
 			return false;
 		}
 	}
@@ -125,6 +133,13 @@ public:
 		}
 
 		return true;
+	}
+
+	void remove_borders(char border, char empty) {
+		for (int y = 0; y < BOARD_SIZE; y++)
+			for (int x = 0; x < BOARD_SIZE; x++)
+				if (field[x][y] == border)
+					field[x][y] = empty; 
 	}
 };
 
@@ -163,13 +178,20 @@ public:
 void set_up_board(game_field & player, game_field & computer);
 bool isValidPos(int x, int y, int length, int lygiuote, game_field field);
 int randomNum(int min, int max);
+bool gameOver(std::vector<game_field> fields);
+void players_turn(game_field & target);
 
 int main() {
 
 	game_field player('#');
 	game_field computer('#');
 
-	set_up_board(player, computer);
+	set_up_board(player, computer); 
+
+
+	while (!gameOver({player, computer})) {
+		players_turn(computer);
+	}
 
 
 	system("pause");
@@ -187,9 +209,9 @@ void set_up_board(game_field & player, game_field & computer) {
 
 	std::vector<ship> ships;
 	ships.push_back(battleship);
-	ships.push_back(cruiser);
-	ships.push_back(destroyer);
-	ships.push_back(submarine);
+	//ships.push_back(cruiser);
+	//ships.push_back(destroyer);
+	//ships.push_back(submarine);
 
 
 	while (!ships.empty()) {
@@ -208,7 +230,7 @@ void set_up_board(game_field & player, game_field & computer) {
 			player.print_with_ships();
 			std::cout << "\nKompiuterio lenta:\n";
 			computer.print_with_ships();
-
+			
 			std::cout << "laivai\n";
 			for (int i = 0; i < ships.size(); i++) {
 				std::cout << i + 1 << ". " << ships[i].getName() << ". Dydis: " << ships[i].getSize() << ". Liko: " << ships[i].getCount() << ".\n";
@@ -217,14 +239,28 @@ void set_up_board(game_field & player, game_field & computer) {
 			std::cout << "\nPasirinkite laiva:\n";
 			std::cin >> laivas;
 			if (laivas < 1 || laivas > ships.size())
-				break;
+				validPlayerInput = false;
+			else
+				validPlayerInput = true;
+
+			if (std::cin.fail())
+			{
+				std::cin.clear();
+				std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				validPlayerInput = false;
+				x = 0;
+				y = 0;
+				lygiuote = 0;
+				laivas = 0;
+			}
 
 			std::cout << "\nKaip ji pastatyti:\n";
 			std::cout << "1. Horizontaliai (laivas judes i desine)\n2. Vertikaliai (laivas judes zemyn)\n";
 			std::cin >> lygiuote;
 			if (lygiuote < 1 || lygiuote > 2)
-				break;
-
+				validPlayerInput = false;
+			else
+				validPlayerInput = true;
 
 			std::cout << "\nx pozicija: ";
 			std::cin >> x;
@@ -234,7 +270,18 @@ void set_up_board(game_field & player, game_field & computer) {
 			std::cin >> y;
 			y--;	 
 
-			if (!validPlayerInput || !isValidPos(x, y, ships[laivas - 1].getSize() - 1, lygiuote, player)) {
+			try {
+				if (!validPlayerInput || !isValidPos(x, y, ships[laivas - 1].getSize() - 1, lygiuote, player)) {
+					validPlayerInput = false;
+					std::cout << "\Bloga pozicija \\\\ Negalimi kiti duomenys\n\n";
+					system("pause");
+					throw new std::exception;
+				}
+			}
+			catch(const std::exception&) {
+				
+
+				validPlayerInput = false;
 				std::cout << "\Bloga pozicija \\\\ Negalimi kiti duomenys\n\n";
 				system("pause");
 			}
@@ -248,7 +295,7 @@ void set_up_board(game_field & player, game_field & computer) {
 		while (!validComputerInput) {
 			computerX = randomNum(0, BOARD_SIZE - 1);
 			computerY = randomNum(0, BOARD_SIZE - 1);
-			computerAligment = (0, 1);
+			computerAligment = randomNum(1, 2);
 
 			if (isValidPos(computerX, computerY, ships[laivas - 1].getSize() - 1, computerAligment, computer))
 				validComputerInput = true;
@@ -265,6 +312,11 @@ void set_up_board(game_field & player, game_field & computer) {
 			ships.erase(ships.begin() + (laivas - 1));
 		}
 	}
+
+	//Remove ship borders after both players have set their board up
+	player.remove_borders('*', '#');
+	computer.remove_borders('*', '#');
+
 }
 
 bool isValidPos(int x, int y, int length, int lygiuote, game_field field) {
@@ -302,5 +354,46 @@ int randomNum(int min, int max) {
 	srand(time(NULL));
 
 	return rand() % (max - min + 1) + min;
+
+}
+
+bool gameOver(std::vector<game_field> fields) {
+
+	for (int i = 0; i < 2; i++) 
+		if (fields[i].game_over('O'))
+			return true;
+	return false;
+
+}
+
+void players_turn(game_field & target) {
+
+	system("cls");
+	std::cout << "Kompiuterio lenta.\n";
+	target.print_without_ships('X', '#', '*');
+	std::cout << "\n\n";
+	target.print_with_ships();
+
+
+	int x;
+	int y;
+	std::cout << "Iveskite x: ";
+	std::cin >> x;
+	std::cout << "Iveskite y: ";
+	std::cin >> y;
+
+	bool hit = target.hit(x - 1, y - 1, 'X', '*', 'O');
+
+
+	system("cls");
+	if (hit) {
+		std::cout << "Hit!\n";
+		system("pause");
+		players_turn(target);
+	}
+	else {
+		std::cout << "Miss!\n";
+		system("pause");
+	}
 
 }

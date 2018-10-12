@@ -1,7 +1,8 @@
 ﻿  Source.cpp
-d:\projects\c++\battleships\battleships\source.cpp(213): warning C4018: '<': signed/unsigned mismatch
-d:\projects\c++\battleships\battleships\source.cpp(219): warning C4018: '>': signed/unsigned mismatch
-d:\projects\c++\battleships\battleships\source.cpp(238): warning C4129: 'B': unrecognized character escape sequence
-d:\projects\c++\battleships\battleships\source.cpp(302): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-d:\projects\c++\battleships\battleships\source.cpp(298): warning C4715: 'isValidPos': not all control paths return a value
+d:\projects\c++\battleships\battleships\source.cpp(235): warning C4018: '<': signed/unsigned mismatch
+d:\projects\c++\battleships\battleships\source.cpp(241): warning C4018: '>': signed/unsigned mismatch
+d:\projects\c++\battleships\battleships\source.cpp(276): warning C4129: 'B': unrecognized character escape sequence
+d:\projects\c++\battleships\battleships\source.cpp(285): warning C4129: 'B': unrecognized character escape sequence
+d:\projects\c++\battleships\battleships\source.cpp(354): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+d:\projects\c++\battleships\battleships\source.cpp(350): warning C4715: 'isValidPos': not all control paths return a value
   Battleships.vcxproj -> D:\Projects\c++\Battleships\Debug\Battleships.exe

@@ -4,6 +4,8 @@
 #include <fstream>
 #include <ctime>
 #include <limits>
+#include <chrono>
+#include <thread>
 
 #define BOARD_SIZE 9
 
@@ -180,6 +182,7 @@ bool isValidPos(int x, int y, int length, int lygiuote, game_field field);
 int randomNum(int min, int max);
 bool gameOver(std::vector<game_field> fields);
 void players_turn(game_field & target);
+void computers_turn(game_field & target);
 
 int main() {
 
@@ -191,6 +194,7 @@ int main() {
 
 	while (!gameOver({player, computer})) {
 		players_turn(computer);
+		computers_turn(player);
 	}
 
 
@@ -369,11 +373,11 @@ bool gameOver(std::vector<game_field> fields) {
 void players_turn(game_field & target) {
 
 	system("cls");
+	std::cout << "Zaidejo eile\n\n";
 	std::cout << "Kompiuterio lenta.\n";
 	target.print_without_ships('X', '#', '*');
 	std::cout << "\n\n";
 	target.print_with_ships();
-
 
 	int x;
 	int y;
@@ -383,7 +387,6 @@ void players_turn(game_field & target) {
 	std::cin >> y;
 
 	bool hit = target.hit(x - 1, y - 1, 'X', '*', 'O');
-
 
 	system("cls");
 	if (hit) {
@@ -396,4 +399,36 @@ void players_turn(game_field & target) {
 		system("pause");
 	}
 
+}
+
+void computers_turn(game_field & target) {
+
+	system("cls");
+	std::cout << "Kompiuterio eile\n\n";
+	std::cout << "Zaidejo lenta:\n";
+	
+	target.print_without_ships('X', '#', '*');
+	std::cout << "x: ";
+	int x = randomNum(0, BOARD_SIZE - 1);
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::cout << x + 1;
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::cout << "\n";
+	std::cout << "y: ";
+	int y = randomNum(0, BOARD_SIZE - 1);
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::cout << y + 1;
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	bool hit = target.hit(x, y, 'X', '*', 'O');
+
+	system("cls");
+	if (hit) {
+		std::cout << "Hit!\n";
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		players_turn(target);
+	}
+	else {
+		std::cout << "Miss!\n";
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	}
 }

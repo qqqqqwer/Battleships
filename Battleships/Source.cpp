@@ -7,7 +7,7 @@
 #include <chrono>
 #include <thread>
 
-#define BOARD_SIZE 9
+#define BOARD_SIZE 10
 
 class game_field {
 
@@ -30,11 +30,11 @@ public:
 
 		std::cout << "  ";
 		for (int i = 0; i < BOARD_SIZE; i++)
-			std::cout << i + 1 << " ";
+			std::cout << i << " ";
 		std::cout << "\n";
 
 		for (int y = 0; y < BOARD_SIZE; y++) {
-			std::cout << y + 1 << " ";
+			std::cout << y << " ";
 			for (int x = 0; x < BOARD_SIZE; x++)
 				std::cout << field[x][y] << " ";
 			std::cout << "\n";
@@ -47,11 +47,11 @@ public:
 		//* - missed shot
 		std::cout << "  ";
 		for (int i = 0; i < BOARD_SIZE; i++)
-			std::cout << i + 1 << " ";
+			std::cout << i << " ";
 		std::cout << "\n";
 
 		for (int y = 0; y < BOARD_SIZE; y++) {
-			std::cout << y + 1 << " ";
+			std::cout << y << " ";
 			for (int x = 0; x < BOARD_SIZE; x++)
 				if (field[x][y] == hit)
 					std::cout << hit << " ";
@@ -149,7 +149,7 @@ public:
 	bool is_valid_pos(int x, int y, int length, int lygiuote) {
 
 		if (lygiuote == 1) {
-			if (x + length >= BOARD_SIZE || x < 0 || y < 0 || y >= BOARD_SIZE)
+			if (x + length > BOARD_SIZE || x < 0 || y < 0 || y > BOARD_SIZE)
 				return false;
 
 			for (int i = x; i < x + length; i++) {
@@ -199,19 +199,19 @@ public:
 		_count = count;
 	}
 
-	std::string getName() {
+	std::string get_name() {
 		return _name;
 	}
 
-	int getSize() {
+	int get_size() {
 		return _size;
 	}
 
-	int getCount() {
+	int get_count() {
 		return _count;
 	}
 
-	void setCount(int count) {
+	void set_count(int count) {
 		_count = count;
 	}
 
@@ -287,7 +287,6 @@ void set_up_board(game_field & player, game_field & computer) {
 	ships.push_back(destroyer);
 	ships.push_back(submarine);
 
-
 	while (!ships.empty()) {
 
 		std::cout << "Zaidejo eile:\n";
@@ -298,6 +297,8 @@ void set_up_board(game_field & player, game_field & computer) {
 		int y;
 
 		bool validPlayerInput = false;
+		bool validShip;
+		bool validAli;
 		while (!validPlayerInput) {
 			system("cls");
 			std::cout << "Zaidejo lenta:\n";
@@ -307,56 +308,47 @@ void set_up_board(game_field & player, game_field & computer) {
 			
 			std::cout << "laivai\n";
 			for (int i = 0; i < ships.size(); i++) {
-				std::cout << i + 1 << ". " << ships[i].getName() << ". Dydis: " << ships[i].getSize() << ". Liko: " << ships[i].getCount() << ".\n";
+				std::cout << i + 1 << ". " << ships[i].get_name() << ". Dydis: " << ships[i].get_size() << ". Liko: " << ships[i].get_count() << ".\n";
 			}
-
-			std::cout << "\nPasirinkite laiva:\n";
-			std::cin >> laivas;
-			if (laivas < 1 || laivas > ships.size())
-				validPlayerInput = false;
-			else
-				validPlayerInput = true;
-
-			if (std::cin.fail())
-			{
-				std::cin.clear();
-				std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-				validPlayerInput = false;
-				x = 0;
-				y = 0;
-				lygiuote = 0;
-				laivas = 0;
-			}
-
-			std::cout << "\nKaip ji pastatyti:\n";
-			std::cout << "1. Horizontaliai (laivas judes i desine)\n2. Vertikaliai (laivas judes zemyn)\n";
-			std::cin >> lygiuote;
-			if (lygiuote < 1 || lygiuote > 2)
-				validPlayerInput = false;
-			else
-				validPlayerInput = true;
-
-			std::cout << "\nx pozicija: ";
-			std::cin >> x;
-			x--;
-
-			std::cout << "y pozicija: ";
-			std::cin >> y;
-			y--;	 
 
 			try {
-				if (!validPlayerInput || !player.is_valid_pos(x, y, ships[laivas - 1].getSize() - 1, lygiuote)) {
-					validPlayerInput = false;
-					std::cout << "\Bloga pozicija \\\\ Negalimi kiti duomenys\n\n";
-					system("pause");
-					throw new std::exception;
+				std::cout << "\nPasirinkite laiva:\n";
+				std::cin >> laivas;
+				if (laivas < 1 || laivas > ships.size()) {
+					validShip = false;
+					laivas = 1;
 				}
-			}
-			catch(const std::exception&) {
+				else
+					validShip = true;
 				
 
+				std::cout << "\nKaip ji pastatyti:\n";
+				std::cout << "1. Horizontaliai (laivas judes i desine)\n2. Vertikaliai (laivas judes zemyn)\n";
+				std::cin >> lygiuote;
+				if (lygiuote < 1 || lygiuote > 2) {
+					validAli = false;
+					lygiuote = 0;
+				}
+				else
+					validAli = true;
+
+				std::cout << "\nx pozicija: ";
+				std::cin >> x;
+
+				std::cout << "y pozicija: ";
+				std::cin >> y;	 
+
+				validPlayerInput = (validShip && validAli);
+				if (!validPlayerInput || !player.is_valid_pos(x, y, ships[laivas - 1].get_size() - 1, lygiuote)) {
+					validPlayerInput = false;
+					std::cout << "\Bloga pozicija \\\\ Negalimi kiti duomenys\n\n";
+					std::cout << player.is_valid_pos(x, y, ships[laivas - 1].get_size() - 1, lygiuote);
+					system("pause");
+				}
+			}
+			catch(...) {
 				validPlayerInput = false;
-				std::cout << "\Bloga pozicija \\\\ Negalimi kiti duomenys\n\n";
+				std::cout << "\Bloga pozicija \\\ Negalimi kiti duomenys\n\n";
 				system("pause");
 			}
 		}
@@ -371,18 +363,18 @@ void set_up_board(game_field & player, game_field & computer) {
 			computerY = random_num(0, BOARD_SIZE - 1);
 			computerAligment = random_num(1, 2);
 
-			if (computer.is_valid_pos(computerX, computerY, ships[laivas - 1].getSize() - 1, computerAligment))
+			if (computer.is_valid_pos(computerX, computerY, ships[laivas - 1].get_size() - 1, computerAligment))
 				validComputerInput = true;
 			else
 				validComputerInput = false;
 		}
 
 		system("cls");
-		player.insert_ship(x, y, ships[laivas - 1].getSize(), 'O', lygiuote, '*');
-		computer.insert_ship(computerX, computerY, ships[laivas - 1].getSize(), 'O', computerAligment, '*');
+		player.insert_ship(x, y, ships[laivas - 1].get_size(), 'O', lygiuote, '*');
+		computer.insert_ship(computerX, computerY, ships[laivas - 1].get_size(), 'O', computerAligment, '*');
 
-		ships[laivas - 1].setCount(ships[laivas - 1].getCount() - 1);
-		if (ships[laivas - 1].getCount() <= 0) {
+		ships[laivas - 1].set_count(ships[laivas - 1].get_count() - 1);
+		if (ships[laivas - 1].get_count() <= 0) {
 			ships.erase(ships.begin() + (laivas - 1));
 		}
 	}
@@ -425,7 +417,7 @@ void players_turn(game_field & target) {
 	std::cout << "Iveskite y: ";
 	std::cin >> y;
 
-	bool hit = target.hit(x - 1, y - 1, 'X', '*', 'O');
+	bool hit = target.hit(x, y, 'X', '*', 'O');
 
 	system("cls");
 	if (hit) {

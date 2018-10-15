@@ -264,6 +264,10 @@ int main() {
 
 	while (!game_over({player, computer})) {
 		players_turn(computer);
+
+		if (game_over({ player, computer }))
+			break;
+
 		computers_turn(player, info);
 	}
 
@@ -307,9 +311,8 @@ void set_up_board(game_field & player, game_field & computer) {
 			computer.print_with_ships();
 			
 			std::cout << "laivai\n";
-			for (int i = 0; i < ships.size(); i++) {
+			for (int i = 0; i < ships.size(); i++) 
 				std::cout << i + 1 << ". " << ships[i].get_name() << ". Dydis: " << ships[i].get_size() << ". Liko: " << ships[i].get_count() << ".\n";
-			}
 
 			try {
 				std::cout << "\nPasirinkite laiva:\n";
@@ -382,7 +385,6 @@ void set_up_board(game_field & player, game_field & computer) {
 	//Remove ship borders after both players have set their board up
 	player.remove_borders('*', '#');
 	computer.remove_borders('*', '#');
-
 }
 
 int random_num(int min, int max) {
@@ -420,6 +422,11 @@ void players_turn(game_field & target) {
 	bool hit = target.hit(x, y, 'X', '*', 'O');
 
 	system("cls");
+	if (target.game_over('O')) {
+		std::cout << "Zaidejas laimejo\n";
+		return;
+	}
+
 	if (hit) {
 		std::cout << "Hit!\n";
 		system("pause");
@@ -453,7 +460,7 @@ void computers_turn(game_field & target, computers_info & info) {
 	std::cout << y + 1;
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	bool hit = target.hit(x, y, 'X', '*', 'O');
-		
+	system("cls");
 
 	if (hit) {
 		std::cout << "Hit!\n";
@@ -464,14 +471,11 @@ void computers_turn(game_field & target, computers_info & info) {
 		std::cout << "Miss!\n";
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
-	
 }
 
 void get_new_target(int & x, int & y, char empty, game_field field) {
-	
 	do {
 		x = random_num(0, BOARD_SIZE - 1);
 		y = random_num(0, BOARD_SIZE - 1);
 	} while (!field.is_valid_pos(x, y, empty));
-	
 }

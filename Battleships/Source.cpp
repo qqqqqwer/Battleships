@@ -14,11 +14,12 @@ class game_field {
 private:
 	char field[BOARD_SIZE][BOARD_SIZE];
 
-public:
 	char getSquare(int x, int y) {
 		return field[x][y];
 	}
 
+public:
+	
 	game_field(char empty) {
 		for (int i = 0; i < BOARD_SIZE; i++)
 			for (int j = 0; j < BOARD_SIZE; j++)
@@ -143,11 +144,50 @@ public:
 				if (field[x][y] == border)
 					field[x][y] = empty; 
 	}
+
+	//For placing ships
+	bool is_valid_pos(int x, int y, int length, int lygiuote) {
+
+		if (lygiuote == 1) {
+			if (x + length >= BOARD_SIZE || x < 0 || y < 0 || y >= BOARD_SIZE)
+				return false;
+
+			for (int i = x; i < x + length; i++) {
+				if (field[i][y] == 'O' || field[i][y] == '*') {
+					return false;
+				}
+				return true;
+			}
+		}
+		else {
+
+			if (y + length >= BOARD_SIZE || x < 0 || y < 0 || x >= BOARD_SIZE)
+				return false;
+
+			for (int i = y; i < y + length; i++) {
+				if (field[x][i] == 'O' || field[x][i] == '*') {
+					return false;
+					break;
+				}
+				else
+					return true;
+
+			}
+		}
+	}
+
+	//For targeting ships
+	bool is_valid_pos(int x, int y, char empty) {
+
+		if (field[x][y] != empty || (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE))
+			return false;
+		else
+			return true;
+
+	}
 };
 
 class ship {
-
-
 private:
 	std::string _name;
 	int _size;
@@ -177,12 +217,42 @@ public:
 
 };
 
+class computers_info {
+public:
+	int x;
+	int y;
+	int startingX;
+	int startingY;
+	int direction; //left, right, top, bottom
+	bool sunken_ship;
+	bool hit;
+
+	void reset() {
+		x = -1;
+		y = -1;
+		startingX = -1;
+		startingY = -1;
+		direction = -1;
+		sunken_ship = false;
+		hit = false;
+	}
+
+	void print() {
+		std::cout << x << " " << y << " " << startingX << " " << startingY << " " << direction << " " << sunken_ship << "\n";
+	}
+
+	computers_info() {
+		reset();
+	}
+
+};
+
 void set_up_board(game_field & player, game_field & computer);
-bool isValidPos(int x, int y, int length, int lygiuote, game_field field);
-int randomNum(int min, int max);
-bool gameOver(std::vector<game_field> fields);
+int random_num(int min, int max);
+bool game_over(std::vector<game_field> fields);
 void players_turn(game_field & target);
-void computers_turn(game_field & target);
+void computers_turn(game_field & target, computers_info & info);
+void get_new_target(int & x, int & y, char empty, game_field field);
 
 int main() {
 
@@ -190,11 +260,11 @@ int main() {
 	game_field computer('#');
 
 	set_up_board(player, computer); 
+	computers_info info;
 
-
-	while (!gameOver({player, computer})) {
+	while (!game_over({player, computer})) {
 		players_turn(computer);
-		computers_turn(player);
+		computers_turn(player, info);
 	}
 
 
@@ -213,9 +283,9 @@ void set_up_board(game_field & player, game_field & computer) {
 
 	std::vector<ship> ships;
 	ships.push_back(battleship);
-	//ships.push_back(cruiser);
-	//ships.push_back(destroyer);
-	//ships.push_back(submarine);
+	ships.push_back(cruiser);
+	ships.push_back(destroyer);
+	ships.push_back(submarine);
 
 
 	while (!ships.empty()) {
@@ -275,7 +345,7 @@ void set_up_board(game_field & player, game_field & computer) {
 			y--;	 
 
 			try {
-				if (!validPlayerInput || !isValidPos(x, y, ships[laivas - 1].getSize() - 1, lygiuote, player)) {
+				if (!validPlayerInput || !player.is_valid_pos(x, y, ships[laivas - 1].getSize() - 1, lygiuote)) {
 					validPlayerInput = false;
 					std::cout << "\Bloga pozicija \\\\ Negalimi kiti duomenys\n\n";
 					system("pause");
@@ -297,11 +367,11 @@ void set_up_board(game_field & player, game_field & computer) {
 
 		bool validComputerInput = false;
 		while (!validComputerInput) {
-			computerX = randomNum(0, BOARD_SIZE - 1);
-			computerY = randomNum(0, BOARD_SIZE - 1);
-			computerAligment = randomNum(1, 2);
+			computerX = random_num(0, BOARD_SIZE - 1);
+			computerY = random_num(0, BOARD_SIZE - 1);
+			computerAligment = random_num(1, 2);
 
-			if (isValidPos(computerX, computerY, ships[laivas - 1].getSize() - 1, computerAligment, computer))
+			if (computer.is_valid_pos(computerX, computerY, ships[laivas - 1].getSize() - 1, computerAligment))
 				validComputerInput = true;
 			else
 				validComputerInput = false;
@@ -323,45 +393,14 @@ void set_up_board(game_field & player, game_field & computer) {
 
 }
 
-bool isValidPos(int x, int y, int length, int lygiuote, game_field field) {
-	
-	if (lygiuote == 1) {
-		if (x + length >= BOARD_SIZE || x < 0 || y < 0 || y >= BOARD_SIZE)
-			return false;
-
-		for (int i = x; i < x + length; i++) {
-			if (field.getSquare(i, y) == 'O' || field.getSquare(i, y) == '*') {
-				return false;
-			}
-			return true;
-		}
-	}
-	else {
-
-		if (y + length >= BOARD_SIZE || x < 0 || y < 0 || x >= BOARD_SIZE)
-			return false;
-
-		for (int i = y; i < y + length; i++) {
-			if (field.getSquare(x, i) == 'O' || field.getSquare(x, i) == '*') {
-				return false;
-				break;
-			}
-			else 
-				return true;
-
-		}
-	}
-}
-
-int randomNum(int min, int max) {
+int random_num(int min, int max) {
 
 	srand(time(NULL));
 
 	return rand() % (max - min + 1) + min;
-
 }
 
-bool gameOver(std::vector<game_field> fields) {
+bool game_over(std::vector<game_field> fields) {
 
 	for (int i = 0; i < 2; i++) 
 		if (fields[i].game_over('O'))
@@ -401,34 +440,46 @@ void players_turn(game_field & target) {
 
 }
 
-void computers_turn(game_field & target) {
+void computers_turn(game_field & target, computers_info & info) {
 
 	system("cls");
 	std::cout << "Kompiuterio eile\n\n";
 	std::cout << "Zaidejo lenta:\n";
-	
 	target.print_without_ships('X', '#', '*');
+
+	system("pause");
+
+	int x, y;
+	get_new_target(x, y, '#', target);
 	std::cout << "x: ";
-	int x = randomNum(0, BOARD_SIZE - 1);
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	std::cout << x + 1;
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	std::cout << "\n";
 	std::cout << "y: ";
-	int y = randomNum(0, BOARD_SIZE - 1);
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	std::cout << y + 1;
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	bool hit = target.hit(x, y, 'X', '*', 'O');
+		
 
-	system("cls");
 	if (hit) {
 		std::cout << "Hit!\n";
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-		players_turn(target);
+		computers_turn(target, info);
 	}
 	else {
 		std::cout << "Miss!\n";
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
+	
+}
+
+void get_new_target(int & x, int & y, char empty, game_field field) {
+	
+	do {
+		x = random_num(0, BOARD_SIZE - 1);
+		y = random_num(0, BOARD_SIZE - 1);
+	} while (!field.is_valid_pos(x, y, empty));
+	
 }
